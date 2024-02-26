@@ -1,0 +1,20 @@
+{
+  "name": "com.wsh.net",
+  "displayName": "Wsh Net",
+  "version": "0.0.1",
+  "unity": "2017.2",
+  "keywords": [
+    "Net"
+  ],
+  "description": "This is a net.",
+  "repository": {
+    "url": "https://github.com/wsh-git/unity-custom-package-unityNet.git",
+    "type": "git",
+    "revision": "9d824e3aeca574022eff896b9c751097dadd0619"
+  },
+  "author": {
+    "name": "wsh",
+    "email": "",
+    "url": ""
+  }
+}
