@@ -24,16 +24,18 @@ namespace Wsh.Net {
                     res = req.GetResponse() as FtpWebResponse;
                 }
                 return req;
-            }catch(Exception e) {
+            } catch(Exception e) {
                 throw;
             }
         }
 
         public static async void Upload(string account, string password, string remoteFileUrl, string localFileUrl, Action<FTPResponse> onFinish) {
-            await Task.Run(() => { StartUpload(account, password, remoteFileUrl, localFileUrl, onFinish); });
+            FTPResponse res = new FTPResponse();
+            await Task.Run(() => { StartUpload(account, password, remoteFileUrl, localFileUrl, ref res); });
+            onFinish?.Invoke(res);
         }
 
-        private static void StartUpload(string account, string password, string remoteFileUrl, string localFileUrl, Action<FTPResponse> onFinish) {
+        private static void StartUpload(string account, string password, string remoteFileUrl, string localFileUrl, ref FTPResponse resFtp) {
             try {
                 FtpWebResponse res;
                 FtpWebRequest req = CreateFtpWebRequest(account, password, remoteFileUrl, WebRequestMethods.Ftp.UploadFile, out res);
@@ -48,19 +50,19 @@ namespace Wsh.Net {
                     fileStream.Close();
                     stream.Close();
                 }
-                onFinish?.Invoke(new FTPResponse{ IsSuccess = true, Message = "upload success."});
-                
+                resFtp.SetInfo(true, "upload success.");
             } catch(Exception e) {
-                onFinish?.Invoke(new FTPResponse{ IsSuccess = false, Message = e.Message});
+                resFtp.SetInfo(false, e.Message);
             }
-
         }
 
         public static async void Download(string account, string password, string remoteFileUrl, string localFileUrl, Action<FTPResponse> onFinish) {
-            await Task.Run(() => { StartDownload(account, password, remoteFileUrl, localFileUrl, onFinish); });
+            FTPResponse res = new FTPResponse();
+            await Task.Run(() => { StartDownload(account, password, remoteFileUrl, localFileUrl, ref res); });
+            onFinish?.Invoke(res);
         }
 
-        private static void StartDownload(string account, string password, string remoteFileUrl, string localFileUrl, Action<FTPResponse> onFinish) {
+        private static void StartDownload(string account, string password, string remoteFileUrl, string localFileUrl, ref FTPResponse resFtp) {
             try {
                 FtpWebResponse res;
                 FtpWebRequest req = CreateFtpWebRequest(account, password, remoteFileUrl, WebRequestMethods.Ftp.DownloadFile, out res);
@@ -74,64 +76,72 @@ namespace Wsh.Net {
                     }
                     fileStream.Close();
                     stream.Close();
-                    onFinish?.Invoke(new FTPResponse{ IsSuccess = true, Message = "download success."});
+                    resFtp.SetInfo(true, "download success.");
                 }
                 res.Close();
             } catch(Exception e) {
-                onFinish?.Invoke(new FTPResponse{ IsSuccess = false, Message = e.Message});
+                resFtp.SetInfo(false, e.Message);
             }
         }
 
         public static async void DeleteFile(string account, string password, string remoteFileUrl, Action<FTPResponse> onFinish) {
-            await Task.Run(() => { StartDeleteFile(account, password, remoteFileUrl, onFinish);});
+            FTPResponse res = new FTPResponse();
+            await Task.Run(() => { StartDeleteFile(account, password, remoteFileUrl, ref res);});
+            onFinish?.Invoke(res);
         }
 
-        private static void StartDeleteFile(string account, string password, string remoteFileUrl, Action<FTPResponse> onFinish) {
+        private static void StartDeleteFile(string account, string password, string remoteFileUrl, ref FTPResponse resFtp) {
             try {
                 FtpWebResponse res;
                 FtpWebRequest req = CreateFtpWebRequest(account, password, remoteFileUrl, WebRequestMethods.Ftp.DeleteFile, out res);
                 res.Close();
-                onFinish?.Invoke(new FTPResponse{ IsSuccess = true, Message = "delete success."});
+                resFtp.SetInfo(true, "delete success.");
             } catch (Exception e) {
-                onFinish?.Invoke(new FTPResponse{ IsSuccess = false, Message = e.Message});
+                resFtp.SetInfo(false, e.Message);
             }
         }
 
         public static async void GetFileSize(string account, string password, string remoteFileUrl, Action<FTPResponse> onFinish) {
-            await Task.Run(() => { StartGetFileSize(account, password, remoteFileUrl, onFinish); });
+            FTPResponse res = new FTPResponse();
+            await Task.Run(() => { StartGetFileSize(account, password, remoteFileUrl, ref res); });
+            onFinish?.Invoke(res);
         }
 
-        private static void StartGetFileSize(string account, string password, string remoteFileUrl, Action<FTPResponse> onFinish) {
+        private static void StartGetFileSize(string account, string password, string remoteFileUrl, ref FTPResponse resFtp) {
             try {
                 FtpWebResponse res;
                 FtpWebRequest req = CreateFtpWebRequest(account, password, remoteFileUrl, WebRequestMethods.Ftp.GetFileSize, out res);
-                onFinish?.Invoke(new FTPResponse{ IsSuccess = true, Size = res.ContentLength, Message = "get file size success."});
+                resFtp.SetInfo(true, res.ContentLength, "get file size success.");
                 res.Close();
             } catch (Exception e) {
-                onFinish?.Invoke(new FTPResponse{ IsSuccess = false, Size = 0, Message = e.Message});
+                resFtp.SetInfo(false, 0, e.Message);
             }
         }
 
         public static async void MakeDirectory(string account, string password, string remoteDirectoryUrl, Action<FTPResponse> onFinish) {
-            await Task.Run(() => { StartMakeDirectory(account, password, remoteDirectoryUrl, onFinish);});
+            FTPResponse res = new FTPResponse();
+            await Task.Run(() => { StartMakeDirectory(account, password, remoteDirectoryUrl, ref res);});
+            onFinish?.Invoke(res);
         }
 
-        private static void StartMakeDirectory(string account, string password, string remoteDirectoryUrl, Action<FTPResponse> onFinish) {
+        private static void StartMakeDirectory(string account, string password, string remoteDirectoryUrl, ref FTPResponse resFtp) {
             try {
                 FtpWebResponse res;
                 FtpWebRequest req = CreateFtpWebRequest(account, password, remoteDirectoryUrl, WebRequestMethods.Ftp.MakeDirectory, out res);
-                onFinish?.Invoke(new FTPResponse{ IsSuccess = true, Message = "create directory success." });
+                resFtp.SetInfo(true, "create directory success.");
                 res.Close();
             } catch (Exception e) {
-                onFinish?.Invoke(new FTPResponse{ IsSuccess = false, Message = e.Message});
+                resFtp.SetInfo(false, e.Message);
             }
         }
 
         public static async void GetFileList(string account, string password, string remoteDirectoryUrl, Action<FTPResponse> onFinish) {
-            await Task.Run(() => { StartGetFileList(account, password, remoteDirectoryUrl, onFinish);});
+            FTPResponse res = new FTPResponse();
+            await Task.Run(() => { StartGetFileList(account, password, remoteDirectoryUrl, ref res);});
+            onFinish?.Invoke(res);
         }
 
-        private static void StartGetFileList(string account, string password, string remoteDirectoryUrl, Action<FTPResponse> onFinish) {
+        private static void StartGetFileList(string account, string password, string remoteDirectoryUrl, ref FTPResponse resFtp) {
             try {
                 FtpWebResponse res;
                 FtpWebRequest req = CreateFtpWebRequest(account, password, remoteDirectoryUrl, WebRequestMethods.Ftp.ListDirectory, out res);
@@ -143,22 +153,24 @@ namespace Wsh.Net {
                         list.Add(fileName);
                         fileName = streamReader.ReadLine();
                     }
-                    onFinish?.Invoke(new FTPResponse { IsSuccess = true, List = list.ToArray(), Message = "get file list success." });
+                    resFtp.SetInfo(true, list.ToArray(), "get file list success.");
                     streamReader.Close();
                     stream.Close();
                     res.Close();
                 }
             } catch (Exception e) {
-                onFinish?.Invoke(new FTPResponse{ IsSuccess = false, List = null, Message = e.Message });
+                resFtp.SetInfo(false, null, e.Message);
             }
         }
 
         public static async void IsExistDirectory(string account, string password, string remoteDirectoryUrl, string directoryName, Action<FTPResponse> onFinish) {
-            await Task.Run(() => { StartIsExistDirectory(account, password, remoteDirectoryUrl, directoryName, onFinish); });
+            FTPResponse res = new FTPResponse();
+            await Task.Run(() => { StartIsExistDirectory(account, password, remoteDirectoryUrl, directoryName, ref res); });
+            onFinish?.Invoke(res);
         }
 
         // 此方法有待详细的验证，不是很精确
-        private static void StartIsExistDirectory(string account, string password, string remoteDirectoryUrl, string directoryName, Action<FTPResponse> onFinish) {
+        private static void StartIsExistDirectory(string account, string password, string remoteDirectoryUrl, string directoryName, ref FTPResponse resFtp) {
             try {
                 FtpWebResponse res;
                 FtpWebRequest req = CreateFtpWebRequest(account, password, remoteDirectoryUrl, WebRequestMethods.Ftp.ListDirectoryDetails, out res);
@@ -182,13 +194,13 @@ namespace Wsh.Net {
                         }
                     }
                     isExist = directoryList.Contains(directoryName);
-                    onFinish?.Invoke(new FTPResponse{ IsSuccess = true, IsExist = isExist, Message = "print working directory success." });
+                    resFtp.SetInfo(true, isExist, "print working directory success.");
                     streamReader.Close();
                     stream.Close();
                     res.Close();
                 }
             } catch(Exception e) {
-                onFinish?.Invoke(new FTPResponse{ IsSuccess = false, IsExist = false, Message = e.Message });
+                resFtp.SetInfo(false, false, e.Message);
             }
         }
 
