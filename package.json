@@ -1,6 +1,6 @@
 {
-  "name": "com.wsh.net",
-  "displayName": "Wsh Net",
+  "name": "com.wshunity.net",
+  "displayName": "Wsh Unity Net",
   "version": "0.0.1",
   "unity": "2017.2",
   "keywords": [
@@ -13,7 +13,7 @@
     "revision": "9d824e3aeca574022eff896b9c751097dadd0619"
   },
   "author": {
-    "name": "wsh",
+    "name": "wshunity",
     "email": "",
     "url": ""
   }
