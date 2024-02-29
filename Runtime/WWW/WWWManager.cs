@@ -58,23 +58,24 @@ namespace Wsh.Net {
         }
 
         private IEnumerator StartRequest<T>(string url, WWWForm form, Action<float> onProgress, Action<bool, string, T> onFinish) where T : class {
-            WWW www = CreateWWW(url, form);
-            while(!www.isDone) {
-                onProgress?.Invoke(www.progress);
-                yield return null;
-            }
-            onProgress?.Invoke(www.progress);
-            if(string.IsNullOrEmpty(www.error)) {
-                T obj = null;
-                Type t = typeof(T);
-                ConvertTypeToObj(t, www, out obj);
-                if(obj == null) {
-                    onFinish?.Invoke(false, "do not contain the type: " + t.ToString(), null);
-                } else {
-                    onFinish?.Invoke(true, "download success.", obj);
+            using(WWW www = CreateWWW(url, form)) {
+                while(!www.isDone) {
+                    onProgress?.Invoke(www.progress);
+                    yield return null;
                 }
-            } else {
-                onFinish?.Invoke(false, www.error, null);
+                onProgress?.Invoke(www.progress);
+                if(string.IsNullOrEmpty(www.error)) {
+                    T obj = null;
+                    Type t = typeof(T);
+                    ConvertTypeToObj(t, www, out obj);
+                    if(obj == null) {
+                        onFinish?.Invoke(false, "do not contain the type: " + t.ToString(), null);
+                    } else {
+                        onFinish?.Invoke(true, "download success.", obj);
+                    }
+                } else {
+                    onFinish?.Invoke(false, www.error, null);
+                }
             }
         }
 
