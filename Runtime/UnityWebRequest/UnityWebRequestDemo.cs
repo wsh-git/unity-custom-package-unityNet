@@ -53,6 +53,14 @@ namespace Wsh.Net {
                 });
             }
 
+            if(GUILayout.Button("Load Text", GUILayout.Width(200), GUILayout.Height(80))) {
+                UnityWebRequestManager.Instance.RequestText(HTTP_SERVER_URL + "hfs.comments.txt", (progress, size) => {
+                    Log.Info("download progress", progress, size);
+                }, res => {
+                    Log.Info(res.IsSuccess, res.Result, res.Message, res.Text);
+                });
+            }
+
         }
     }
     

@@ -8,6 +8,10 @@ using Wsh.Singleton;
 
 namespace Wsh.Net {
     public class UnityWebRequestManager : Singleton<UnityWebRequestManager> {
+
+        public void RequestText(string remoteUrl, Action<float, ulong> onProgress, Action<UnityWebResponse> onFinish) {
+            StartCoroutine(StartDownload(remoteUrl, null, onProgress, onFinish));
+        }
         
         public void DownloadFile(string remoteFileUrl, string localFileUrl, Action<float, ulong> onProgress, Action<UnityWebResponse> onFinish) {
             DownloadHandlerFile fileHandler = new DownloadHandlerFile(localFileUrl);
@@ -46,7 +50,9 @@ namespace Wsh.Net {
         
         private UnityWebRequest CreateAndSendWebRequest(string remoteFileUrl, DownloadHandler downloadHandler) {
             UnityWebRequest req = UnityWebRequest.Get(remoteFileUrl);
-            req.downloadHandler = downloadHandler;
+            if(downloadHandler != null) {
+                req.downloadHandler = downloadHandler;
+            }
             req.SendWebRequest();
             return req;
         }
@@ -60,9 +66,13 @@ namespace Wsh.Net {
                 }
                 onProgress?.Invoke(req.downloadProgress, req.downloadedBytes);
                 if(req.result == UnityWebRequest.Result.Success) {
-                    resUnityWeb.SetInfo(req.result, "download file success.");
+                    string text = "";
+                    if(downloadHandler == null) {
+                        text = req.downloadHandler.text;
+                    }
+                    resUnityWeb.SetInfo(req.result, text, "download file success.");
                 } else {
-                    resUnityWeb.SetInfo(req.result, "error: " + req.error + "    responseCode: " + req.responseCode);
+                    resUnityWeb.SetInfo(req.result, "","error: " + req.error + "    responseCode: " + req.responseCode);
                 }
                 onFinish?.Invoke(resUnityWeb);
                 resUnityWeb.Dispose();
@@ -85,9 +95,9 @@ namespace Wsh.Net {
                 }
                 onProgress?.Invoke(req.uploadProgress, req.uploadedBytes);
                 if(req.result == UnityWebRequest.Result.Success) {
-                    resUnityWeb.SetInfo(req.result, "web request success.");
+                    resUnityWeb.SetInfo(req.result, "","web request success.");
                 } else {
-                    resUnityWeb.SetInfo(req.result, "error: " + req.error + "    responseCode: " + req.responseCode);
+                    resUnityWeb.SetInfo(req.result, "","error: " + req.error + "    responseCode: " + req.responseCode);
                 }
                 onFinish?.Invoke(resUnityWeb);
                 resUnityWeb.Dispose();

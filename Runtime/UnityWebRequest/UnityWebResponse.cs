@@ -12,19 +12,22 @@ namespace Wsh.Net {
             }
         }
         public UnityWebRequest.Result Result => m_result;
+        public string Text => m_text;
         public string Message => m_message;
         public Texture Texture => m_texture;
         public AssetBundle AssetBundle => m_assetBundle;
         public AudioClip AudioClip => m_audioClip;
         
         private UnityWebRequest.Result m_result;
+        private string m_text;
         private string m_message;
         private Texture m_texture;
         private AssetBundle m_assetBundle;
         private AudioClip m_audioClip;
 
-        public void SetInfo(UnityWebRequest.Result result, string message) {
+        public void SetInfo(UnityWebRequest.Result result, string text, string message) {
             m_result = result;
+            m_text = text;
             m_message = message;
         }
 
@@ -44,6 +47,7 @@ namespace Wsh.Net {
             m_result = 0;
             m_texture = null;
             m_message = null;
+            m_text = null;            
             m_assetBundle = null;
             m_audioClip = null;
         }
