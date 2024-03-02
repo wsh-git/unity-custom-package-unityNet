@@ -6,7 +6,7 @@
   "keywords": [
     "Net"
   ],
-  "description": "This is a net.",
+  "description": "This is a net.\n依赖项：\n    https://gitee.com/kevinwei133506/unity-custom-package-unity-singleton.git\n    https://gitee.com/kevinwei133506/unity-custom-package-unity-log.git",
   "repository": {
     "url": "https://github.com/wsh-git/unity-custom-package-unityNet.git",
     "type": "git",
