@@ -4,7 +4,7 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Text;
 
-namespace Wsh.Net {
+namespace Wsh.Net.Https {
     
     public class Http {
 

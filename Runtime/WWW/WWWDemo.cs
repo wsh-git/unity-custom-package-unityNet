@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-namespace Wsh.Net {
+
+namespace Wsh.Net.Wwws {
     public class WWWDemo : MonoBehaviour {
         
         [SerializeField] private RawImage m_rawImage;

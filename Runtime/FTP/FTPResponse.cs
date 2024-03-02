@@ -1,4 +1,4 @@
-﻿namespace Wsh.Net {
+﻿namespace Wsh.Net.Ftps {
     
     public class FTPResponse {
         

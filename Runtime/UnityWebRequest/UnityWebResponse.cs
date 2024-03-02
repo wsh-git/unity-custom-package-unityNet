@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace Wsh.Net {
+namespace Wsh.Net.UnityWebRequests {
     
     public class UnityWebResponse : IDisposable {
         

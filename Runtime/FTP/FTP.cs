@@ -2,10 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Wsh.Net {
+namespace Wsh.Net.Ftps {
     public class FTP {
 
         private static FtpWebRequest CreateFtpWebRequest(string account, string password, string remoteFileUrl, string method, out FtpWebResponse res) {

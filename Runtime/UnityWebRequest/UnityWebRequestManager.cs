@@ -6,8 +6,12 @@ using UnityEngine;
 using UnityEngine.Networking;
 using Wsh.Singleton;
 
-namespace Wsh.Net {
-    public class UnityWebRequestManager : Singleton<UnityWebRequestManager> {
+namespace Wsh.Net.UnityWebRequests {
+    public class UnityWebRequestManager : Singleton<UnityWebRequestManager>, ISingleton {
+
+        public void OnInit() {
+
+        }
 
         public void RequestText(string remoteUrl, Action<float, ulong> onProgress, Action<UnityWebResponse> onFinish) {
             StartCoroutine(StartDownload(remoteUrl, null, onProgress, onFinish));
@@ -104,6 +108,10 @@ namespace Wsh.Net {
             }
         }
         
+        public void OnDeinit() {
+
+        }
+
     }
     
 }

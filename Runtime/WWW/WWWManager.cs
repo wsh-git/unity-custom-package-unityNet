@@ -3,8 +3,12 @@ using System.Collections;
 using Wsh.Singleton;
 using UnityEngine;
 
-namespace Wsh.Net {
-    public class WWWManager : Singleton<WWWManager> {
+namespace Wsh.Net.Wwws {
+    public class WWWManager : Singleton<WWWManager>, ISingleton {
+
+        public void OnInit() {
+
+        }
 
         public void DownloadAssetBundle(string url, Action<float> onProgress, Action<bool, string, AssetBundle> onFinish) {
             Download<AssetBundle>(url, onProgress, onFinish);
@@ -77,6 +81,10 @@ namespace Wsh.Net {
                     onFinish?.Invoke(false, www.error, null);
                 }
             }
+        }
+
+        public void OnDeinit() {
+
         }
 
     }

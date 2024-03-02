@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace Wsh.Net {
+namespace Wsh.Net.Https {
 
     public class HttpResponse {
 

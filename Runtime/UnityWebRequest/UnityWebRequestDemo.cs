@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-namespace Wsh.Net {
+namespace Wsh.Net.UnityWebRequests {
     
     public class UnityWebRequestDemo : MonoBehaviour {
 

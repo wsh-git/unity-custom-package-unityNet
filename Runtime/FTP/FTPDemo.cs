@@ -1,7 +1,6 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace Wsh.Net {
+namespace Wsh.Net.Ftps {
     
     public class FTPDemo : MonoBehaviour {
         

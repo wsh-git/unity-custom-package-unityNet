@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Wsh.Net {
+namespace Wsh.Net.Https {
     
     public class HttpDemo : MonoBehaviour {
 
