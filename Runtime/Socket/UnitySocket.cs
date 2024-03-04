@@ -4,12 +4,17 @@ using System.Net;
 using System.Net.Sockets;
 
 namespace Wsh.Net.Sockets {
+    
     public class UnitySocket {
+
+        public event Action<UnitySocket, byte[]> OnReceiveMessage;
+        public event Action OnDisconnectPassively;
+        public event Action<string> OnNetworkError;
 
         public string Name => m_name;
         public string Ip => m_ip;
         public int Port => m_port;
-        public bool IsConnected { get { return m_socket.Connected; } }
+        public bool IsConnected { get { return m_socket.Connected && !m_isDisconnectPassively; } }
 
         private string m_name;
         private string m_ip;
@@ -17,18 +22,43 @@ namespace Wsh.Net.Sockets {
         private Socket m_socket;
         private byte[] m_cacheBytes;
         private int m_cacheNum;
-
         private Queue<byte[]> m_receiveQueue;
+        private float m_heartMessageTime;
+        private bool m_isDisconnectPassively;
+        private int m_cacheDisconnectMessageType;
+        private byte[] m_cacheDisconnectMessage;
+        private SocketAsyncEventArgs m_heartSendAsyncEventArgs;
 
-        public UnitySocket(string name, string ip, int port) {
-            m_name = name;
-            m_ip = ip;
-            m_port = port;
-
+        private void InitData() {
+            InitHeartMessageTime();
+            m_isDisconnectPassively = false;
             m_cacheBytes = new byte[UnitySocketDefine.MESSAGE_RECEIVE_CACHE_BYTE_SIZE];
             m_cacheNum = 0;
             m_receiveQueue = new Queue<byte[]>();
             m_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        }
+        
+        public UnitySocket(string name, string ip, int port) {
+            m_name = name;
+            m_ip = ip;
+            m_port = port;
+            InitData();
+            CreateHeartSendAsyncEventArgs();
+        }
+
+        private void InitHeartMessageTime() {
+            m_heartMessageTime = UnitySocketDefine.MESSAGE_HEART_SEND_TIME_SPACE;
+        }
+
+        private void CreateHeartSendAsyncEventArgs() {
+            m_heartSendAsyncEventArgs = new SocketAsyncEventArgs();
+            byte[] messageBytes = new byte[10];
+            m_heartSendAsyncEventArgs.SetBuffer(messageBytes, 0, messageBytes.Length);
+            m_heartSendAsyncEventArgs.Completed += (object socket, SocketAsyncEventArgs eventArgs) => {
+                if(eventArgs.SocketError != SocketError.Success) {
+                    HandlerNetworkError(eventArgs.SocketError);
+                }
+            };
         }
 
         public void StartConnect(Action<bool, string> onFinish) {
@@ -45,6 +75,7 @@ namespace Wsh.Net.Sockets {
             args.RemoteEndPoint = iPEndPoint;
             args.Completed += (object sender, SocketAsyncEventArgs eventArgs) => {
                 if(eventArgs.SocketError == SocketError.Success) {
+                    // 连接成功之后，可以在这里开启一个心跳消息，例如1s间隔就发一条心跳消息
                     StartReceiveMessage();
                     onFinish?.Invoke(true, $"The socket({Name}) connect success.");
                 } else {
@@ -62,18 +93,70 @@ namespace Wsh.Net.Sockets {
         }
 
         public void SendMessage(byte[] data, Action<bool, string> onFinish) {
+            SendMessage(0, data, onFinish);
+        }
+
+        private void HandlerDisconnectPassively(int id, byte[] data) {
+            if(m_isDisconnectPassively) {
+                return;
+            }
+            if(id != 0) {
+                m_cacheDisconnectMessageType = id;
+                m_cacheDisconnectMessage = data;
+            }
+            OnDisconnectPassively?.Invoke();
+            m_isDisconnectPassively = true;
+        }
+
+        private void HandlerNetworkError(SocketError socketError) {
+            if(!m_isDisconnectPassively) {
+                OnNetworkError?.Invoke(socketError.ToString() + ":" + (int)socketError);                
+            }
+        }
+
+        public void Reconnect(Action<bool, string> onFinish) {
+            ForceDestroySocket();
+            InitData();
+            StartConnect((isSuccess, message) => {
+                if(isSuccess) {
+                    if(m_cacheDisconnectMessageType != 0) {
+                        SendMessage(m_cacheDisconnectMessageType, m_cacheDisconnectMessage, null);
+                    }
+                    m_cacheDisconnectMessageType = 0;
+                    m_isDisconnectPassively = false;
+                }
+                onFinish?.Invoke(isSuccess, message);
+            });
+        }
+        
+        public void SendMessage(int id, byte[] data, Action<bool, string> onFinish) {
             if(IsConnected) {
                 SocketAsyncEventArgs args = new SocketAsyncEventArgs();
-                args.SetBuffer(data, 0, data.Length);
+                byte[] messageBytes = new byte[UnitySocketDefine.MESSAGE_HEAD_BYTES_LENGTH + data.Length];
+                Array.Copy(BitConverter.GetBytes(id), 0, messageBytes, 0, UnitySocketDefine.MESSAGE_TYPE_BYTES_LENGTH);
+                Array.Copy(BitConverter.GetBytes(data.Length), 0, messageBytes, UnitySocketDefine.MESSAGE_TYPE_BYTES_LENGTH, UnitySocketDefine.MESSAGE_LENGTH_BYTES_LENGTH);
+                Array.Copy(data, 0, messageBytes, UnitySocketDefine.MESSAGE_HEAD_BYTES_LENGTH, data.Length);
+                args.SetBuffer(messageBytes, 0, messageBytes.Length);
                 args.Completed += (object socket, SocketAsyncEventArgs eventArgs) => {
                     if(eventArgs.SocketError == SocketError.Success) {
                         onFinish?.Invoke(true, "Message send success.");
                     } else {
                         onFinish?.Invoke(false, "Message end failed. " + eventArgs.SocketError);
+                        HandlerNetworkError(eventArgs.SocketError);
                     }
                 };
+                m_socket.SendAsync(args);
             } else {
+                HandlerDisconnectPassively(id, data);
                 onFinish?.Invoke(false, $"The socket({Name} is not connected.)");
+            }
+        }
+
+        private void TrySendHeartMessage() {
+            if(IsConnected) {
+                m_socket.SendAsync(m_heartSendAsyncEventArgs);
+            } else {
+                HandlerDisconnectPassively(0, null);
             }
         }
 
@@ -83,7 +166,7 @@ namespace Wsh.Net.Sockets {
                 args.SetBuffer(m_cacheNum, args.Buffer.Length - m_cacheNum);
                 m_socket.ReceiveAsync(args);
             } else {
-
+                HandlerNetworkError(args.SocketError);
             }
         }
 
@@ -120,7 +203,11 @@ namespace Wsh.Net.Sockets {
                     if(baseMsg != null) {
                         receiveQueue.Enqueue(baseMsg);
                     }*/
-                        
+                    
+                    byte[] messageBytes = new byte[UnitySocketDefine.MESSAGE_TYPE_BYTES_LENGTH + msgLength];
+                    Array.Copy(BitConverter.GetBytes(msgID), 0, messageBytes, 0, UnitySocketDefine.MESSAGE_TYPE_BYTES_LENGTH);
+                    Array.Copy(m_cacheBytes, nowIndex, messageBytes, UnitySocketDefine.MESSAGE_TYPE_BYTES_LENGTH, msgLength);
+                    m_receiveQueue.Enqueue(messageBytes);
                     nowIndex += msgLength;
                     if(nowIndex == m_cacheNum) {
                         m_cacheNum = 0;
@@ -140,10 +227,20 @@ namespace Wsh.Net.Sockets {
         }
 
         public void OnUpdate(float deltaTime) {
-            if(m_receiveQueue.Count > 0) {
-                byte[] bytes = m_receiveQueue.Dequeue();
+            if(IsConnected) {
+                if(m_receiveQueue.Count > 0) {
+                    OnReceiveMessage?.Invoke(this, m_receiveQueue.Dequeue());
+                }
+                CheckSendHeartMessage(deltaTime);
+            }
+        }
 
-
+        private void CheckSendHeartMessage(float deltaTime) {
+            if(m_heartMessageTime > 0) {
+                m_heartMessageTime -= deltaTime;
+            } else {
+                TrySendHeartMessage();
+                InitHeartMessageTime();
             }
         }
 
@@ -152,10 +249,7 @@ namespace Wsh.Net.Sockets {
                 // 可自定义断开连接的消息，服务端不能百分百检测到客户端已断开连接
                 // CloseMessage
 
-                m_socket.Shutdown(SocketShutdown.Both);
-                m_socket.Disconnect(false);
-                m_socket.Close();
-                m_socket = null;
+                ForceDestroySocket();
             }
         }
         
@@ -163,6 +257,15 @@ namespace Wsh.Net.Sockets {
             CloseConnect();
         }
 
+        private void ForceDestroySocket() {
+            if(m_socket != null) {
+                m_socket.Shutdown(SocketShutdown.Both);
+                m_socket.Disconnect(false);
+                m_socket.Close();
+            }
+            m_socket = null;
+        }
+        
     }
 
 }

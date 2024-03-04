@@ -16,6 +16,8 @@
         // 消息头的总长度 = 消息类型所占字节长度 + 消息体长度所占字节的长度
         public const int MESSAGE_HEAD_BYTES_LENGTH = MESSAGE_TYPE_BYTES_LENGTH + MESSAGE_LENGTH_BYTES_LENGTH;
 
+        public const int MESSAGE_HEART_SEND_TIME_SPACE = 1;
+
     }
 
 }
