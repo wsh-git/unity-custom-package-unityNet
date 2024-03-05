@@ -86,6 +86,7 @@ namespace Wsh.Net.Https {
             onFinish?.Invoke(res);
         }
 
+        // 此方法上传不会覆盖原文件
         private static void StartUpload(string account, string password, string remoteUrl, string fileName, string localFileUrl, ref HttpResponse resHttp) {
             try{
                 HttpWebRequest req = CreateRequest(remoteUrl, WebRequestMethods.Http.Post, 500000);
