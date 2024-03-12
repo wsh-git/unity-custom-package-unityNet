@@ -4,12 +4,12 @@ using UnityEngine;
 using Wsh.Singleton;
 
 namespace Wsh.Net.Sockets {
-    public class UnitySocketManager : Singleton<UnitySocketManager>, ISingleton {
+    public class UnitySocketManager : MonoSingleton<UnitySocketManager> {
 
         private List<UnitySocket> m_socketList;
         private int m_index;
 
-        public void OnInit() {
+        protected override void OnInit() {
             m_socketList = new List<UnitySocket>();
         }
 
@@ -20,13 +20,13 @@ namespace Wsh.Net.Sockets {
             return unitySocket;
         }
 
-        protected override void Update() {
+        void Update() {
             for(m_index = 0; m_index < m_socketList.Count; m_index++) {
                 m_socketList[m_index].OnUpdate(Time.deltaTime);
             }
         }
 
-        public void OnDeinit() {
+        protected override void OnDeinit() {
             m_socketList.Clear();
             m_socketList = null;
         }

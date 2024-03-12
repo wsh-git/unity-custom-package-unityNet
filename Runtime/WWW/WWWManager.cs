@@ -4,11 +4,7 @@ using Wsh.Singleton;
 using UnityEngine;
 
 namespace Wsh.Net.Wwws {
-    public class WWWManager : Singleton<WWWManager>, ISingleton {
-
-        public void OnInit() {
-
-        }
+    public class WWWManager : MonoSingleton<WWWManager> {
 
         public void DownloadAssetBundle(string url, Action<float> onProgress, Action<bool, string, AssetBundle> onFinish) {
             Download<AssetBundle>(url, onProgress, onFinish);
@@ -81,10 +77,6 @@ namespace Wsh.Net.Wwws {
                     onFinish?.Invoke(false, www.error, null);
                 }
             }
-        }
-
-        public void OnDeinit() {
-
         }
 
     }
